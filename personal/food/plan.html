@@ -1,0 +1,655 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Plano Alimentar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+
+<style>
+  /* Layout: tabela de refeições com timing lateral, macros em header fixo */
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: #e2e0da;
+    --fg: #1a1917;
+    --fg-2: #6b6860;
+    --fg-3: #a09e99;
+    --prot: #1e6fd9;
+    --prot-bg: #e8f0fb;
+    --carb: #b05c0a;
+    --carb-bg: #fdf0e5;
+    --fat: #5a5a5a;
+    --fat-bg: #f0f0ee;
+    --cal: #1a1917;
+    --green: #1a7a4a;
+    --green-bg: #e6f5ed;
+    --section-bg: #f0ede8;
+    --radius: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141412;
+      --surface: #1e1d1b;
+      --border: #2e2c29;
+      --fg: #f0ede8;
+      --fg-2: #9e9b95;
+      --fg-3: #5e5c57;
+      --prot: #5fa0f0;
+      --prot-bg: #1a2a40;
+      --carb: #e08040;
+      --carb-bg: #2a1a0a;
+      --fat: #a0a09a;
+      --fat-bg: #252420;
+      --cal: #f0ede8;
+      --green: #3ab870;
+      --green-bg: #0a2018;
+      --section-bg: #252420;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141412;
+    --surface: #1e1d1b;
+    --border: #2e2c29;
+    --fg: #f0ede8;
+    --fg-2: #9e9b95;
+    --fg-3: #5e5c57;
+    --prot: #5fa0f0;
+    --prot-bg: #1a2a40;
+    --carb: #e08040;
+    --carb-bg: #2a1a0a;
+    --fat: #a0a09a;
+    --fat-bg: #252420;
+    --cal: #f0ede8;
+    --green: #3ab870;
+    --green-bg: #0a2018;
+    --section-bg: #252420;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 28px; }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--fg-2);
+  }
+
+  /* Macro totals */
+  .totals {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .total-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .total-card .label {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-2);
+    margin-bottom: 6px;
+  }
+  .total-card .value {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .total-card .delta {
+    font-size: 11px;
+    margin-top: 3px;
+    color: var(--green);
+  }
+  .total-card .delta.warn { color: var(--carb); }
+  .v-cal { color: var(--cal); }
+  .v-prot { color: var(--prot); }
+  .v-carb { color: var(--carb); }
+  .v-fat { color: var(--fat); }
+
+  /* Meal sections */
+  .meal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .meal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--section-bg);
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .meal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .meal-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fg-3);
+    white-space: nowrap;
+  }
+  .meal-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .meal-tag {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .tag-pre { background: var(--prot-bg); color: var(--prot); }
+  .tag-post { background: var(--green-bg); color: var(--green); }
+  .tag-snack { background: var(--fat-bg); color: var(--fat); }
+  .tag-dinner { background: var(--carb-bg); color: var(--carb); }
+
+  .meal-macros {
+    display: flex;
+    gap: 14px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .macro-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .macro-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-prot { background: var(--prot); }
+  .dot-carb { background: var(--carb); }
+  .dot-fat { background: var(--fat); }
+
+  /* Food rows */
+  .food-row {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 52px);
+    align-items: center;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .food-row:last-child { border-bottom: none; }
+  .food-name {
+    font-size: 13px;
+    color: var(--fg);
+    min-width: 0;
+  }
+  .food-num {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .food-num.kcal { color: var(--fg-2); }
+  .food-num.prot { color: var(--prot); }
+  .food-num.carb { color: var(--carb); }
+  .food-num.fat  { color: var(--fat); }
+
+  /* Column headers */
+  .col-headers {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 52px);
+    padding: 6px 16px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .col-h {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: right;
+    color: var(--fg-3);
+  }
+  .col-h:first-child { text-align: left; }
+
+  /* Subtotal row */
+  .subtotal {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 52px);
+    padding: 8px 16px;
+    gap: 8px;
+    background: var(--section-bg);
+    border-top: 1px solid var(--border);
+  }
+  .subtotal-label {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-3);
+  }
+  .subtotal .food-num { font-weight: 500; }
+
+  /* Workout divider */
+  .workout-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    color: var(--fg-3);
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .workout-divider::before,
+  .workout-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Total row */
+  .grand-total {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 52px);
+    gap: 8px;
+    align-items: center;
+    margin-top: 16px;
+  }
+  .grand-total .gt-label {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .grand-total .food-num {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Notes */
+  .notes {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .note-card h3 {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-2);
+    margin-bottom: 10px;
+  }
+  .note-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--fg-2);
+    line-height: 1.6;
+  }
+  .note-item::before {
+    content: '—';
+    color: var(--fg-3);
+    flex-shrink: 0;
+  }
+
+  /* Comparison badges */
+  .delta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+  }
+  .badge-down { background: var(--green-bg); color: var(--green); }
+  .badge-up { background: var(--prot-bg); color: var(--prot); }
+  .badge-warn { background: var(--carb-bg); color: var(--carb); }
+
+  @media (max-width: 540px) {
+    .totals { grid-template-columns: 1fr 1fr; }
+    .notes { grid-template-columns: 1fr; }
+    .meal-macros { display: none; }
+    .food-row, .subtotal, .grand-total, .col-headers {
+      grid-template-columns: 1fr repeat(4, 44px);
+      gap: 4px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .food-num, .food-name { font-size: 11px; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="header">
+    <h1>Plano Alimentar</h1>
+    <p>Dieta ajustada · 2.265 kcal · Déficit retomado</p>
+  </div>
+
+  <div class="totals">
+    <div class="total-card">
+      <div class="label">Calorias</div>
+      <div class="value v-cal">2.265</div>
+      <div class="delta">kcal/dia</div>
+    </div>
+    <div class="total-card">
+      <div class="label">Proteína</div>
+      <div class="value v-prot">238g</div>
+      <div class="delta">2,28 g/kg ↑</div>
+    </div>
+    <div class="total-card">
+      <div class="label">Carboidrato</div>
+      <div class="value v-carb">195g</div>
+      <div class="delta warn">−91g vs anterior</div>
+    </div>
+    <div class="total-card">
+      <div class="label">Gordura</div>
+      <div class="value v-fat">57g</div>
+      <div class="delta">↑ vs anterior</div>
+    </div>
+  </div>
+
+  <!-- PRÉ-TREINO -->
+  <div class="meal">
+    <div class="meal-header">
+      <div class="meal-title">
+        <span class="meal-time">10:00</span>
+        <span class="meal-name">Pré-treino</span>
+        <span class="meal-tag tag-pre">Pré</span>
+      </div>
+      <div class="meal-macros">
+        <span class="macro-pill"><span class="dot dot-prot"></span>79g</span>
+        <span class="macro-pill"><span class="dot dot-carb"></span>45g</span>
+        <span class="macro-pill"><span class="dot dot-fat"></span>29g</span>
+      </div>
+    </div>
+    <div class="col-headers">
+      <span class="col-h">alimento</span>
+      <span class="col-h">kcal</span>
+      <span class="col-h" style="color:var(--prot)">prot</span>
+      <span class="col-h" style="color:var(--carb)">carb</span>
+      <span class="col-h" style="color:var(--fat)">gord</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">5 ovos inteiros</span>
+      <span class="food-num kcal">350</span>
+      <span class="food-num prot">30g</span>
+      <span class="food-num carb">2g</span>
+      <span class="food-num fat">25g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">1 banana nanica</span>
+      <span class="food-num kcal">90</span>
+      <span class="food-num prot">1g</span>
+      <span class="food-num carb">23g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">60g whey concentrado</span>
+      <span class="food-num kcal">240</span>
+      <span class="food-num prot">40g</span>
+      <span class="food-num carb">8g</span>
+      <span class="food-num fat">4g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">250ml leite desnatado</span>
+      <span class="food-num kcal">85</span>
+      <span class="food-num prot">8g</span>
+      <span class="food-num carb">12g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="subtotal">
+      <span class="subtotal-label">Subtotal</span>
+      <span class="food-num kcal">765</span>
+      <span class="food-num prot">79g</span>
+      <span class="food-num carb">45g</span>
+      <span class="food-num fat">29g</span>
+    </div>
+  </div>
+
+  <div class="workout-divider">12:30 — Treino</div>
+
+  <!-- ALMOÇO -->
+  <div class="meal">
+    <div class="meal-header">
+      <div class="meal-title">
+        <span class="meal-time">14:00</span>
+        <span class="meal-name">Almoço</span>
+        <span class="meal-tag tag-post">Pós-treino</span>
+      </div>
+      <div class="meal-macros">
+        <span class="macro-pill"><span class="dot dot-prot"></span>54g</span>
+        <span class="macro-pill"><span class="dot dot-carb"></span>76g</span>
+        <span class="macro-pill"><span class="dot dot-fat"></span>5g</span>
+      </div>
+    </div>
+    <div class="col-headers">
+      <span class="col-h">alimento</span>
+      <span class="col-h">kcal</span>
+      <span class="col-h" style="color:var(--prot)">prot</span>
+      <span class="col-h" style="color:var(--carb)">carb</span>
+      <span class="col-h" style="color:var(--fat)">gord</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">200g frango (peito)</span>
+      <span class="food-num kcal">220</span>
+      <span class="food-num prot">46g</span>
+      <span class="food-num carb">0g</span>
+      <span class="food-num fat">4g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">250g arroz cozido</span>
+      <span class="food-num kcal">290</span>
+      <span class="food-num prot">6g</span>
+      <span class="food-num carb">64g</span>
+      <span class="food-num fat">1g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">150g legumes + cebola + tomate</span>
+      <span class="food-num kcal">60</span>
+      <span class="food-num prot">2g</span>
+      <span class="food-num carb">12g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="subtotal">
+      <span class="subtotal-label">Subtotal</span>
+      <span class="food-num kcal">570</span>
+      <span class="food-num prot">54g</span>
+      <span class="food-num carb">76g</span>
+      <span class="food-num fat">5g</span>
+    </div>
+  </div>
+
+  <!-- TARDE -->
+  <div class="meal">
+    <div class="meal-header">
+      <div class="meal-title">
+        <span class="meal-time">17–18h</span>
+        <span class="meal-name">Tarde</span>
+        <span class="meal-tag tag-snack">Lanche</span>
+      </div>
+      <div class="meal-macros">
+        <span class="macro-pill"><span class="dot dot-prot"></span>54g</span>
+        <span class="macro-pill"><span class="dot dot-carb"></span>26g</span>
+        <span class="macro-pill"><span class="dot dot-fat"></span>19g</span>
+      </div>
+    </div>
+    <div class="col-headers">
+      <span class="col-h">alimento</span>
+      <span class="col-h">kcal</span>
+      <span class="col-h" style="color:var(--prot)">prot</span>
+      <span class="col-h" style="color:var(--carb)">carb</span>
+      <span class="col-h" style="color:var(--fat)">gord</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">60g whey concentrado</span>
+      <span class="food-num kcal">240</span>
+      <span class="food-num prot">40g</span>
+      <span class="food-num carb">8g</span>
+      <span class="food-num fat">4g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">250ml leite desnatado</span>
+      <span class="food-num kcal">85</span>
+      <span class="food-num prot">8g</span>
+      <span class="food-num carb">12g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">30g amêndoas</span>
+      <span class="food-num kcal">175</span>
+      <span class="food-num prot">6g</span>
+      <span class="food-num carb">6g</span>
+      <span class="food-num fat">15g</span>
+    </div>
+    <div class="subtotal">
+      <span class="subtotal-label">Subtotal</span>
+      <span class="food-num kcal">500</span>
+      <span class="food-num prot">54g</span>
+      <span class="food-num carb">26g</span>
+      <span class="food-num fat">19g</span>
+    </div>
+  </div>
+
+  <!-- NOITE -->
+  <div class="meal">
+    <div class="meal-header">
+      <div class="meal-title">
+        <span class="meal-time">20–21h</span>
+        <span class="meal-name">Noite</span>
+        <span class="meal-tag tag-dinner">Jantar</span>
+      </div>
+      <div class="meal-macros">
+        <span class="macro-pill"><span class="dot dot-prot"></span>51g</span>
+        <span class="macro-pill"><span class="dot dot-carb"></span>48g</span>
+        <span class="macro-pill"><span class="dot dot-fat"></span>4g</span>
+      </div>
+    </div>
+    <div class="col-headers">
+      <span class="col-h">alimento</span>
+      <span class="col-h">kcal</span>
+      <span class="col-h" style="color:var(--prot)">prot</span>
+      <span class="col-h" style="color:var(--carb)">carb</span>
+      <span class="col-h" style="color:var(--fat)">gord</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">200g frango (peito)</span>
+      <span class="food-num kcal">220</span>
+      <span class="food-num prot">46g</span>
+      <span class="food-num carb">0g</span>
+      <span class="food-num fat">4g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">200g batata cozida</span>
+      <span class="food-num kcal">170</span>
+      <span class="food-num prot">4g</span>
+      <span class="food-num carb">40g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="food-row">
+      <span class="food-name">100g legumes + cebola + tomate</span>
+      <span class="food-num kcal">40</span>
+      <span class="food-num prot">1g</span>
+      <span class="food-num carb">8g</span>
+      <span class="food-num fat">0g</span>
+    </div>
+    <div class="subtotal">
+      <span class="subtotal-label">Subtotal</span>
+      <span class="food-num kcal">430</span>
+      <span class="food-num prot">51g</span>
+      <span class="food-num carb">48g</span>
+      <span class="food-num fat">4g</span>
+    </div>
+  </div>
+
+  <!-- TOTAL GERAL -->
+  <div class="grand-total">
+    <span class="gt-label">Total diário</span>
+    <span class="food-num kcal" style="font-size:15px">2.265</span>
+    <span class="food-num prot" style="font-size:15px">238g</span>
+    <span class="food-num carb" style="font-size:15px">195g</span>
+    <span class="food-num fat" style="font-size:15px">57g</span>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="notes">
+    <div class="note-card">
+      <h3>Vs. dieta anterior</h3>
+      <div class="delta-row"><span class="badge badge-down">−225 kcal</span> 2.490 → 2.265</div>
+      <div class="delta-row"><span class="badge badge-up">+43g prot</span> 195 → 238g</div>
+      <div class="delta-row"><span class="badge badge-down">−91g carb</span> 286 → 195g</div>
+      <div class="delta-row"><span class="badge badge-up">+16g gord</span> 41 → 57g</div>
+    </div>
+    <div class="note-card">
+      <h3>Lógica do timing</h3>
+      <div class="note-item">Carb concentrado pré e pós-treino</div>
+      <div class="note-item">Proteína alta em todas as refeições</div>
+      <div class="note-item">Amêndoas longe do treino (gordura retarda esvaziamento gástrico)</div>
+      <div class="note-item">Noite leve em carb, pesada em proteína</div>
+    </div>
+  </div>
+
+</div>
+
+</body></html>
