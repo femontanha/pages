@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Suplementação</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Mesmos tokens do personal/food e personal/body */
+  :root {
+    color-scheme: light;
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: #e2e0da;
+    --fg: #1a1917;
+    --fg-2: #6b6860;
+    --fg-3: #a09e99;
+    --blue: #1e6fd9;
+    --blue-bg: #e8f0fb;
+    --orange: #b05c0a;
+    --orange-bg: #fdf0e5;
+    --green: #1a7a4a;
+    --green-bg: #e6f5ed;
+    --neutral-bg: #f0f0ee;
+    --section-bg: #f0ede8;
+    --radius: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #141412;
+      --surface: #1e1d1b;
+      --border: #2e2c29;
+      --fg: #f0ede8;
+      --fg-2: #9e9b95;
+      --fg-3: #6e6c67;
+      --blue: #5fa0f0;
+      --blue-bg: #1a2a40;
+      --orange: #e08040;
+      --orange-bg: #2a1a0a;
+      --green: #3ab870;
+      --green-bg: #0a2018;
+      --neutral-bg: #252420;
+      --section-bg: #252420;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #141412;
+    --surface: #1e1d1b;
+    --border: #2e2c29;
+    --fg: #f0ede8;
+    --fg-2: #9e9b95;
+    --fg-3: #6e6c67;
+    --blue: #5fa0f0;
+    --blue-bg: #1a2a40;
+    --orange: #e08040;
+    --orange-bg: #2a1a0a;
+    --green: #3ab870;
+    --green-bg: #0a2018;
+    --neutral-bg: #252420;
+    --section-bg: #252420;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; }
+
+  .header { margin-bottom: 8px; }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: var(--fg-2); }
+
+  .month-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 28px 0 10px;
+  }
+  .month-head h2 {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-2);
+  }
+  .month-head .count { font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--fg-3); }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--section-bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .item-title { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+  .item-name { font-size: 13px; font-weight: 600; }
+  .tag {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .tag-compound { background: var(--blue-bg); color: var(--blue); }
+  .tag-daily { background: var(--green-bg); color: var(--green); }
+  .tag-ready { background: var(--orange-bg); color: var(--orange); }
+
+  .dose {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .dose .k {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-3);
+    flex-shrink: 0;
+    width: 72px;
+  }
+  .dose .v { font-weight: 500; }
+  .dose .v.muted { font-weight: 400; color: var(--fg-2); }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .amt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-2);
+    white-space: nowrap;
+  }
+  .row.vehicle { background: var(--bg); color: var(--fg-2); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Suplementação</h1>
+    <p id="subtitle"></p>
+  </div>
+
+  <div id="months"></div>
+
+</div>
+
+<script>
+// ─── Dados ──────────────────────────────────────────────────────────────
+// Para adicionar um mês ou item, edite este array.
+// type: 'compound' = manipulado, 'daily' = uso diário, 'ready' = industrializado
+const months = [
+  {
+    month: 'Outubro 2026',
+    items: [
+      {
+        name: 'Ômega 3 concentrado',
+        type: 'daily',
+        dose: 'Uso diário',
+        actives: [['EPA + DHA (total)', '3.000 mg/dia']],
+      },
+      {
+        name: 'Vitamina D + CoQ10',
+        type: 'compound',
+        dose: '1 cápsula ao dia, junto a uma refeição',
+        actives: [
+          ['Vitamina D3 (colecalciferol)', '7.000 UI'],
+          ['Vitamina K2 (MK-7)', '100 mcg'],
+          ['Ubiquinol', '200 mg'],
+          ['Vitamina E', '10 mg'],
+        ],
+        vehicle: 'Veículo oleoso q.s.p. cápsula',
+      },
+      {
+        name: 'Biogênese mitocondrial',
+        type: 'compound',
+        dose: '1 cápsula de 12/12h',
+        actives: [
+          ['PQQ', '10 mg'],
+          ['Ácido alfa-lipoico', '150 mg'],
+          ['Taurina', '250 mg'],
+          ['Nicotinamida', '50 mg'],
+          ['P5P', '10 mg'],
+          ['L-carnitina', '250 mg'],
+          ['Metilcobalamina', '500 mcg'],
+        ],
+        vehicle: 'Excipiente q.s.p. cápsula',
+      },
+    ],
+  },
+  {
+    month: 'Novembro 2026',
+    items: [
+      {
+        name: 'Multivitamínico Imunomult®',
+        type: 'ready',
+        pack: '120 cápsulas',
+      },
+      {
+        name: 'Biocolin® Hair',
+        type: 'ready',
+        pack: '60 cápsulas de 500 mg',
+      },
+    ],
+  },
+];
+
+const tags = {
+  compound: ['Manipulado', 'tag-compound'],
+  daily: ['Uso diário', 'tag-daily'],
+  ready: ['Industrializado', 'tag-ready'],
+};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const totalItems = months.reduce((n, m) => n + m.items.length, 0);
+document.getElementById('subtitle').textContent =
+  `${months.length} meses · ${totalItems} itens`;
+
+document.getElementById('months').innerHTML = months.map(m => `
+  <div class="month-head">
+    <h2>${esc(m.month)}</h2>
+    <span class="count">${m.items.length} ${m.items.length === 1 ? 'item' : 'itens'}</span>
+  </div>
+  ${m.items.map(it => {
+    const [tagLabel, tagCls] = tags[it.type];
+    return `<div class="item">
+      <div class="item-header">
+        <div class="item-title">
+          <span class="item-name">${esc(it.name)}</span>
+          <span class="tag ${tagCls}">${tagLabel}</span>
+        </div>
+      </div>
+      <div class="dose"><span class="k">Posologia</span><span class="v${it.dose ? '' : ' muted'}">${esc(it.dose || 'Conforme orientação')}</span></div>
+      ${it.pack ? `<div class="dose"><span class="k">Embalagem</span><span class="v muted">${esc(it.pack)}</span></div>` : ''}
+      ${(it.actives || []).map(([n, a]) => `<div class="row"><span>${esc(n)}</span><span class="amt">${esc(a)}</span></div>`).join('')}
+      ${it.vehicle ? `<div class="row vehicle"><span>${esc(it.vehicle)}</span></div>` : ''}
+    </div>`;
+  }).join('')}
+`).join('');
+</script>
+</body>
+</html>
