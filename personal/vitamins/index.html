@@ -184,28 +184,31 @@
 // ─── Dados ──────────────────────────────────────────────────────────────
 // Para adicionar um mês ou item, edite este array.
 // type: 'compound' = manipulado, 'daily' = uso diário, 'ready' = industrializado
+const omega3 = {
+  name: 'Ômega 3 concentrado',
+  type: 'daily',
+  dose: 'Uso diário',
+  actives: [['EPA + DHA (total)', '3.000 mg/dia']],
+};
+const vitD = {
+  name: 'Vitamina D + CoQ10',
+  type: 'compound',
+  dose: '1 cápsula ao dia, junto a uma refeição',
+  actives: [
+    ['Vitamina D3 (colecalciferol)', '7.000 UI'],
+    ['Vitamina K2 (MK-7)', '100 mcg'],
+    ['Ubiquinol', '200 mg'],
+    ['Vitamina E', '10 mg'],
+  ],
+  vehicle: 'Veículo oleoso q.s.p. cápsula',
+};
+
 const months = [
   {
     month: 'Outubro 2026',
     items: [
-      {
-        name: 'Ômega 3 concentrado',
-        type: 'daily',
-        dose: 'Uso diário',
-        actives: [['EPA + DHA (total)', '3.000 mg/dia']],
-      },
-      {
-        name: 'Vitamina D + CoQ10',
-        type: 'compound',
-        dose: '1 cápsula ao dia, junto a uma refeição',
-        actives: [
-          ['Vitamina D3 (colecalciferol)', '7.000 UI'],
-          ['Vitamina K2 (MK-7)', '100 mcg'],
-          ['Ubiquinol', '200 mg'],
-          ['Vitamina E', '10 mg'],
-        ],
-        vehicle: 'Veículo oleoso q.s.p. cápsula',
-      },
+      omega3,
+      vitD,
       {
         name: 'Biogênese mitocondrial',
         type: 'compound',
@@ -226,6 +229,8 @@ const months = [
   {
     month: 'Novembro 2026',
     items: [
+      omega3,
+      vitD,
       {
         name: 'Multivitamínico Imunomult®',
         type: 'ready',
