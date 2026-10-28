@@ -81,22 +81,51 @@
   .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
   .header p { font-size: 13px; color: var(--fg-2); }
 
-  .month-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin: 28px 0 10px;
+  /* Quadrados dos meses */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 24px 0 16px;
   }
-  .month-head h2 {
+  .tile {
+    aspect-ratio: 1 / 1;
+    max-height: 200px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: left;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--fg);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .tile:hover { border-color: var(--fg-3); }
+  .tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .tile[aria-expanded="true"] { border-color: var(--blue); background: var(--blue-bg); }
+  .tile .year {
     font-size: 11px;
     font-family: 'IBM Plex Mono', monospace;
-    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    color: var(--fg-3);
+  }
+  .tile .name { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .tile .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
     color: var(--fg-2);
   }
-  .month-head .count { font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--fg-3); }
+  .tile .chev { transition: transform .15s; font-size: 14px; }
+  .tile[aria-expanded="true"] .chev { transform: rotate(180deg); color: var(--blue); }
 
   .item {
     background: var(--surface);
@@ -257,11 +286,19 @@ const totalItems = months.reduce((n, m) => n + m.items.length, 0);
 document.getElementById('subtitle').textContent =
   `${months.length} meses · ${totalItems} itens`;
 
-document.getElementById('months').innerHTML = months.map(m => `
-  <div class="month-head">
-    <h2>${esc(m.month)}</h2>
-    <span class="count">${m.items.length} ${m.items.length === 1 ? 'item' : 'itens'}</span>
-  </div>
+const countLabel = n => `${n} ${n === 1 ? 'item' : 'itens'}`;
+
+document.getElementById('months').innerHTML = `
+  <div class="tiles">${months.map((m, i) => {
+    const [name, year] = m.month.split(' ');
+    return `<button class="tile" type="button" aria-expanded="false" aria-controls="month-${i}" data-i="${i}">
+      <span class="year">${esc(year || '')}</span>
+      <span class="name">${esc(name)}</span>
+      <span class="foot"><span>${countLabel(m.items.length)}</span><span class="chev" aria-hidden="true">▾</span></span>
+    </button>`;
+  }).join('')}</div>
+` + months.map((m, i) => `
+  <div class="panel" id="month-${i}" hidden>
   ${m.items.map(it => {
     const [tagLabel, tagCls] = tags[it.type];
     return `<div class="item">
@@ -277,7 +314,21 @@ document.getElementById('months').innerHTML = months.map(m => `
       ${it.vehicle ? `<div class="row vehicle"><span>${esc(it.vehicle)}</span></div>` : ''}
     </div>`;
   }).join('')}
+  </div>
 `).join('');
+
+// Abre um mês por vez; clicar no aberto fecha
+let open = null;
+const tilesEl = document.querySelectorAll('.tile');
+tilesEl.forEach(btn => btn.addEventListener('click', () => {
+  const i = +btn.dataset.i;
+  open = open === i ? null : i;
+  tilesEl.forEach(b => {
+    const on = +b.dataset.i === open;
+    b.setAttribute('aria-expanded', on);
+    document.getElementById(b.getAttribute('aria-controls')).hidden = !on;
+  });
+}));
 </script>
 </body>
 </html>
